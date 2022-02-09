@@ -1,0 +1,43 @@
+{{- if and .Values.ingress.enabled (not .Values.ingress.customResourceEnabled) -}}
+{{- $service := .Values.service }}
+{{- $serviceName := include "dbeaver.name" . }}
+{{- $servicePort := $service.port -}}
+{{- $newApiVersion := (not (.Capabilities.APIVersions.Has "extensions/v1beta1")) -}}
+{{- if $newApiVersion }}
+apiVersion: networking.k8s.io/v1
+{{ else }}
+apiVersion: extensions/v1beta1
+{{ end -}}
+kind: Ingress
+metadata:
+  name: {{ template "dbeaver.fullname" . }}-ingress
+  labels: 
+    {{- include "dbeaver.labels" . | nindent 4 }}
+{{- if .Values.ingress.annotations }}
+  annotations:
+{{ toYaml .Values.ingress.annotations | indent 4 }}
+{{- end }}
+spec:
+  rules:
+    - host: {{ tpl .Values.ingress.hostname . }}
+      http:
+        paths:
+          - path: {{ .Values.ingress.path }}
+            pathType: Prefix
+            backend:
+            {{- if $newApiVersion }}
+              service:
+                name: {{ $serviceName }}
+                port:
+                  number: {{ $servicePort }}
+            {{ else }}
+              serviceName: {{ $serviceName }}
+              servicePort: {{ $servicePort }}
+            {{ end -}}
+{{- if .Values.ingress.tlsEnabled }}
+  tls:
+    - hosts:
+        - {{ tpl .Values.ingress.hostname . }}
+      secretName: {{ tpl .Values.ingress.tlsSecretName . }}
+{{- end -}}
+{{- end -}}

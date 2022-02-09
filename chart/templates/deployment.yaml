@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "dbeaver.name" . }}
+  labels:
+    {{- include "dbeaver.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "dbeaver.selectorLabels" . | nindent 6 }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        {{- include "dbeaver.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: {{ include "dbeaver.name" . }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          args:
+          - -web-config=/etc/cloudbeaver/cloudbeaver.conf
+          envFrom:
+          - secretRef: 
+              name: {{ include "dbeaver.name" . }}-env
+          volumeMounts:
+            - name: data
+              mountPath: /opt/cloudbeaver/workspace
+              subPath: dbeaver
+            - name: config
+              mountPath: /etc/cloudbeaver/
+      securityContext:
+      {{- toYaml .Values.securityContext | nindent 8 }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "dbeaver.name" . }}-pvc
+        - name: config
+          configMap:
+            name: {{ include "dbeaver.name" . }}-conf

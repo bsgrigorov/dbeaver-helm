@@ -1,0 +1,49 @@
+# Default values for dbeaver.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+hostNetwork: false
+image:
+  repository: dbeaver/cloudbeaver
+  pullPolicy: IfNotPresent
+  tag: "21.3.0"
+
+securityContext: {}
+
+certManager:
+  enabled: false
+  clusterIssuer:
+    issuerRef: letsencrypt
+
+service:
+  type: ClusterIP
+  name: http
+  port: 80
+  protocol: TCP
+  targetPort: 8978
+
+ingress:
+  enabled: true
+  customResourceEnabled: false # use custom resource provided Ingress (not recommended because it uses old API version of Ingress)
+  tlsEnabled: true
+  tlsSecretName: "dbeaver.{{ .Values.domain }}"
+  hostname: "dbeaver.{{ .Values.domain }}"
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  path: "/"
+
+storage:
+  # storageClassName: ""
+  capacity: 5Gi
+
+resources:
+  requests:
+    cpu: 100m
+    memory: "128Mi"
+  limits:
+    cpu: 200m
+    memory: "256Mi"
+
+domain: mydomain.com
