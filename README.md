@@ -8,3 +8,5 @@ helm upgrade -i dbeaver chart
 ```
 
 Check out https://github.com/dbeaver/cloudbeaver/wiki/Run-Docker-Container 
+
+For configuration check out https://github.com/dbeaver/cloudbeaver/wiki/Server-configuration#automatic-server-configuration
